@@ -5,8 +5,43 @@ enum StatementType {
     SELECT
 }
 
-struct Statement {
+trait Statement {
+    fn execute(&self) -> Result<(), String>;
+    fn typ(&self) -> &StatementType;
+}
+
+struct Insert {
     typ: StatementType,
+}
+
+impl Statement for Insert {
+    fn execute(&self) -> Result<(), String> {
+        println!("Executed INSERT");
+        return Ok(());  
+    }
+    fn typ(&self) -> &StatementType {
+        return &self.typ;
+    }
+}
+
+struct Select {
+    typ: StatementType,
+}
+
+impl Statement for Select {
+    fn execute(&self) -> Result<(), String> {
+        println!("Executed SELECT");
+        return Ok(());  
+    }
+    fn typ(&self) -> &StatementType {
+        return &self.typ;
+    }
+}
+
+struct Row {
+    id: u64,
+    username: String,
+    email: String,
 }
 
 fn print_prompt() {
@@ -14,25 +49,17 @@ fn print_prompt() {
     io::stdout().flush().expect("Failed to flush stdout");
 }
 
-fn prepare_statement(line: &str) -> Result<Statement, String> {
-    if line.starts_with("INSERT ") {
-        return Ok(Statement {
+fn prepare_statement(line: &str) -> Result<Box<dyn Statement>, String> {
+    if line.starts_with("INSERT") {
+        return Ok(Box::new(Insert {
                 typ: StatementType::INSERT,
-            });
-    } else if (line.starts_with("SELECT ")) {
-        return Ok(Statement {
+            }));
+    } else if line.starts_with("SELECT") {
+        return Ok(Box::new(Select {
             typ: StatementType::SELECT,
-        });
+        }));
     }
     return Err(format!("Unrecognized statement {line}"));
-}
-
-fn execute_statement(statement: Statement) -> Result<(), String> {
-    match statement.typ {
-        StatementType::INSERT => println!("Would execute INSERT"),
-        StatementType::SELECT => println!("Would execute SELECT"),
-    }
-    return Ok(());
 }
 
 fn main() {
@@ -46,7 +73,7 @@ fn main() {
                 return;
             },
             l => match prepare_statement(l) {
-                Ok(statement) => match execute_statement(statement) {
+                Ok(statement) => match statement.execute() {
                     Ok(()) => println!("Executed."),
                     Err(msg) => println!("Failed to execute statement: {}", msg),
                 },
