@@ -1,4 +1,6 @@
 use std::{fmt::format, io::{self, Write}};
+use regex::Regex;
+
 
 enum StatementType {
     INSERT,
@@ -12,6 +14,7 @@ trait Statement {
 
 struct Insert {
     typ: StatementType,
+    row: Row
 }
 
 impl Statement for Insert {
@@ -50,9 +53,21 @@ fn print_prompt() {
 }
 
 fn prepare_statement(line: &str) -> Result<Box<dyn Statement>, String> {
+    let insert_re = Regex::new(r"(INSERT|insert) ([0-9]+) (\S+) (\S+)").unwrap();
     if line.starts_with("INSERT") {
+        let Some(captures) = insert_re.captures(line) else {
+          return Err(format!("Invalid INSERT statement: {line}"));   
+        };
+        let Ok(id) = captures[2].parse() else {
+            return Err(format!("Invalid id."));
+        };
         return Ok(Box::new(Insert {
                 typ: StatementType::INSERT,
+                row: Row {
+                    id: id,
+                    username: captures[3].to_string(),
+                    email: captures[4].to_string(),
+                },
             }));
     } else if line.starts_with("SELECT") {
         return Ok(Box::new(Select {
