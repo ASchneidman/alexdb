@@ -1,6 +1,8 @@
-use std::{fmt::format, io::{self, Write}};
+use std::io::{self, Write};
 use regex::Regex;
 
+const COLUMN_USERNAME_SIZE: usize = 32;
+const COLUMN_EMAIL_SIZE: usize = 255;
 
 enum StatementType {
     INSERT,
@@ -43,8 +45,8 @@ impl Statement for Select {
 
 struct Row {
     id: u64,
-    username: String,
-    email: String,
+    username: [u8; COLUMN_USERNAME_SIZE],
+    email: [u8; COLUMN_EMAIL_SIZE],
 }
 
 fn print_prompt() {
@@ -61,12 +63,17 @@ fn prepare_statement(line: &str) -> Result<Box<dyn Statement>, String> {
         let Ok(id) = captures[2].parse() else {
             return Err(format!("Invalid id."));
         };
+        let mut username: [u8; COLUMN_USERNAME_SIZE] = Default::default();
+        let username_
+        let Ok(email) = captures[4].as_bytes()[..COLUMN_EMAIL_SIZE].try_into() else {
+            return Err(format!("Invalid email."));
+        };
         return Ok(Box::new(Insert {
                 typ: StatementType::INSERT,
                 row: Row {
                     id: id,
-                    username: captures[3].to_string(),
-                    email: captures[4].to_string(),
+                    username: username,
+                    email: email,
                 },
             }));
     } else if line.starts_with("SELECT") {
