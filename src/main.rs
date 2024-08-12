@@ -2,7 +2,7 @@ use std::io::{self, Write};
 use regex::Regex;
 
 const COLUMN_USERNAME_SIZE: usize = 32;
-const COLUMN_EMAIL_SIZE: usize = 255;
+const COLUMN_EMAIL_SIZE: usize = 32;
 
 enum StatementType {
     INSERT,
@@ -45,8 +45,10 @@ impl Statement for Select {
 
 struct Row {
     id: u64,
-    username: [u8; COLUMN_USERNAME_SIZE],
-    email: [u8; COLUMN_EMAIL_SIZE],
+    username: u64,
+    email: u64,
+    // username: [u8; COLUMN_USERNAME_SIZE],
+    // email: [u8; COLUMN_EMAIL_SIZE],
 }
 
 fn print_prompt() {
@@ -63,11 +65,21 @@ fn prepare_statement(line: &str) -> Result<Box<dyn Statement>, String> {
         let Ok(id) = captures[2].parse() else {
             return Err(format!("Invalid id."));
         };
-        let mut username: [u8; COLUMN_USERNAME_SIZE] = Default::default();
-        let username_
+        let Ok(username) = captures[3].parse() else {
+            return Err(format!("Invalid username."));
+        };
+        let Ok(email) = captures[4].parse() else {
+            return Err(format!("Invalid email."));
+        };
+        /* 
+        let Some(username) = captures[3] else {
+            return;
+            // return Err(format!("Invalid username"));
+        };
         let Ok(email) = captures[4].as_bytes()[..COLUMN_EMAIL_SIZE].try_into() else {
             return Err(format!("Invalid email."));
         };
+        */
         return Ok(Box::new(Insert {
                 typ: StatementType::INSERT,
                 row: Row {
